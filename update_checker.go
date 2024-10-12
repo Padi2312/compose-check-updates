@@ -8,14 +8,6 @@ import (
 	"strings"
 )
 
-type UpdateInfo struct {
-	RawLine       string
-	ImageName     string
-	FullImageName string
-	CurrentTag    string
-	LatestTag     string
-}
-
 type UpdateChecker struct {
 	path string
 }
@@ -25,79 +17,41 @@ func NewUpdateChecker(path string) *UpdateChecker {
 }
 
 func (u *UpdateChecker) Check() ([]UpdateInfo, error) {
-	// Get the image name from the compose file
-	imageNames, err := u.getImageNames()
+	updateInfos, err := u.createUpdateInfos()
 	if err != nil {
 		return nil, err
 	}
 
-	updateInfos, err := u.getUpdateInfos(imageNames)
-	if err != nil {
-		return nil, err
-	}
-
-	return updateInfos, nil
-}
-
-func (u *UpdateChecker) getUpdateInfos(imageNames []string) ([]UpdateInfo, error) {
-	var updateInfos []UpdateInfo
-	for _, imageName := range imageNames {
-		parts := strings.Split(imageName, ":")
-		if len(parts) < 2 {
-			slog.Warn("Skipping image %s because it does not have a tag", imageName, imageName)
+	for i, updateInfo := range updateInfos {
+		version, err := GetSemver(updateInfo.CurrentTag)
+		if err != nil {
+			slog.Warn("Skipping - no valid semver tag", "image", updateInfo.FullImageName)
 			continue
 		}
 
-		imageName := parts[0]
-		imageTag := parts[1]
-		version, err := GetSemver(imageTag)
+		tags, err := FetchImageTags(updateInfo.ImageName)
 		if err != nil {
-			slog.Warn("Skipping image %s because it does not have a semver tag", imageName, imageName)
-			continue
-		}
-
-		tags, err := FetchImageTags(imageName)
-		if err != nil {
-			slog.Error("Skipping image %s because could not fetch tags", imageName, imageName)
+			slog.Error("Skipping - could not fetch tags", "image", updateInfo.FullImageName)
 			continue
 		}
 
 		latestVersion, err := FindLatestVersion(version, tags)
 		if err != nil {
-			slog.Error("Skipping image %s because could not find latest version", imageName, imageName)
+			slog.Error("Skipping - could not find latest version", "image", updateInfo.FullImageName)
 			continue
 		}
 
 		if latestVersion != "" {
-			updateInfos = append(updateInfos, UpdateInfo{
-				RawLine:    imageName + ":" + imageTag,
-				ImageName:  imageName,
-				CurrentTag: version.Original(),
-				LatestTag:  latestVersion,
-			})
+			updateInfos[i].LatestTag = latestVersion
 		}
 	}
+
 	return updateInfos, nil
 }
 
-func (u *UpdateChecker) getImageTagMap(imageNames []string) (map[string]string, error) {
-	imageTagMap := make(map[string]string)
-	for _, imageName := range imageNames {
-		parts := strings.Split(imageName, ":")
-		if len(parts) < 2 {
-			slog.Warn("Skipping image %s because it does not have a tag", imageName, imageName)
-			continue
-		}
-
-		imageName := parts[0]
-		imageTag := parts[1]
-		imageTagMap[imageName] = imageTag
-	}
-	return imageTagMap, nil
-}
-
-func (u *UpdateChecker) initUpdateInfos() ([]UpdateInfo, error) {
+func (u *UpdateChecker) createUpdateInfos() ([]UpdateInfo, error) {
 	var updateInfos []UpdateInfo
+	uniqueImages := make(map[string]struct{})
 
 	file, err := os.Open(u.path)
 	if err != nil {
@@ -113,36 +67,29 @@ func (u *UpdateChecker) initUpdateInfos() ([]UpdateInfo, error) {
 		matches := imageNamePattern.FindStringSubmatch(line)
 		if len(matches) > 1 {
 			imageName := matches[1]
-			updateInfos = append(updateInfos, UpdateInfo{
-				RawLine:       imageName,
-				FullImageName: imageName,
-			})
+			name, tag := u.getNameAndTag(imageName)
+			imageKey := name + ":" + tag
+
+			if _, exists := uniqueImages[imageKey]; !exists {
+				uniqueImages[imageKey] = struct{}{}
+				updateInfos = append(updateInfos, UpdateInfo{
+					FilePath:      u.path,
+					RawLine:       line,
+					FullImageName: imageName,
+					ImageName:     name,
+					CurrentTag:    tag,
+				})
+			}
 		}
 	}
 
 	return updateInfos, nil
 }
 
-func (u *UpdateChecker) getImageNames() ([]string, error) {
-
-	file, err := os.Open(u.path)
-	if err != nil {
-		return nil, err
+func (u *UpdateChecker) getNameAndTag(imageName string) (string, string) {
+	parts := strings.Split(imageName, ":")
+	if len(parts) < 2 {
+		return parts[0], ""
 	}
-
-	defer file.Close()
-
-	var imageNames []string
-	imageNamePattern := regexp.MustCompile(`^\s*image:\s*(\S+)\s*$`)
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		matches := imageNamePattern.FindStringSubmatch(line)
-		if len(matches) > 1 {
-			imageName := matches[1]
-			imageNames = append(imageNames, imageName)
-		}
-	}
-
-	return imageNames, nil
+	return parts[0], parts[1]
 }
