@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"os"
@@ -33,7 +33,34 @@ func (u *UpdateInfo) HasNewVersion() bool {
 	return latest.GreaterThan(current)
 }
 
+func (u *UpdateInfo) Backup() error {
+	input, err := os.ReadFile(u.FilePath)
+	if err != nil {
+		return err
+	}
+
+	// Do a backup of the original file
+	err = os.WriteFile(u.FilePath+".ccu", input, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (u *UpdateInfo) Update() error {
+	// check if a backup file exists
+	_, err := os.Stat(u.FilePath + ".ccu")
+	if err != nil {
+		if os.IsNotExist(err) {
+			// if the file does not exist, create a backup
+			err = u.Backup()
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	input, err := os.ReadFile(u.FilePath)
 	if err != nil {
 		return err
