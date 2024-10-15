@@ -1,0 +1,45 @@
+name: Pre-release ccu
+on: workflow_dispatch
+
+jobs:
+  build-and-upload:
+    name: Build and upload
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        os: [linux, windows]
+        goarch: [amd64]  # Add more architectures if needed
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get version
+        run: |
+          version=$(grep -o 'var version = "[^"]*"' main.go | cut -d'"' -f2)
+          echo "VERSION=$version" >> $GITHUB_ENV
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.23.2'  # Use the Go version that your project requires
+
+      - name: Build
+        run: |
+          go generate ./build/gen.go
+          GOOS=${{ matrix.os }} GOARCH=${{ matrix.goarch }} go build -o ${{ github.workspace }}/build/ccu-${{ matrix.os }}-${{ matrix.goarch }}${{ matrix.os == 'windows' && '.exe' || '' }} main.go
+          echo "ASSET=${{ github.workspace }}/build/ccu-${{ matrix.os }}-${{ matrix.goarch }}${{ matrix.os == 'windows' && '.exe' || '' }}" >> $GITHUB_ENV
+
+      - name: Tag commit
+        run: |
+          git tag ${{ env.VERSION }}
+          git push origin ${{ env.VERSION }}
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ${{ env.ASSET }}
+          tag_name: ${{ env.VERSION }}
+          prerelease: true
