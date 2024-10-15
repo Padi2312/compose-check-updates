@@ -30,7 +30,6 @@ jobs:
 
       - name: Build
         run: |
-          go generate ./build/gen.go
           GOOS=${{ matrix.os }} GOARCH=${{ matrix.goarch }} go build -o ${{ github.workspace }}/build/ccu-${{ matrix.os }}-${{ matrix.goarch }}${{ matrix.os == 'windows' && '.exe' || '' }} main.go
           echo "ASSET=${{ github.workspace }}/build/ccu-${{ matrix.os }}-${{ matrix.goarch }}${{ matrix.os == 'windows' && '.exe' || '' }}" >> $GITHUB_ENV
 

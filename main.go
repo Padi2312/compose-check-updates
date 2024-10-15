@@ -9,6 +9,8 @@ import (
 	"github.com/padi2312/compose-check-updates/internal/modes"
 )
 
+var version = "0.1.0"
+
 func main() {
 	// Set colorized logger
 	logger := slog.New(logger.NewCustomHandler(slog.LevelInfo, os.Stdout))
