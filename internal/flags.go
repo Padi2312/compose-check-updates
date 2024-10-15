@@ -6,11 +6,15 @@ import (
 )
 
 type CCUFlags struct {
-	Help        bool
-	Update      bool
-	Restart     bool
-	Interactive bool
-	Directory   string
+	Help        bool   // Show help message
+	Update      bool   // Update the Docker Compose files with the new image tags
+	Restart     bool   // Restart the services after updating the Docker Compose files
+	Interactive bool   // Interactively choose which docker images to update
+	Directory   string // Root directory to search for Docker Compose files
+	Full        bool   // Update to the latest semver version
+	Major       bool   // Update to the latest major version
+	Minor       bool   // Update to the latest minor version
+	Patch       bool   // Update to the latest patch version
 }
 
 func Parse() CCUFlags {
@@ -21,8 +25,18 @@ func Parse() CCUFlags {
 	flag.BoolVar(&args.Restart, "r", false, "Restart the services after updating the Docker Compose files")
 	flag.BoolVar(&args.Interactive, "i", false, "Interactively choose which docker images to update")
 	flag.StringVar(&args.Directory, "d", ".", "Root directory to search for Docker Compose files")
+	flag.BoolVar(&args.Full, "f", false, "Update to the latest major version")
+	flag.BoolVar(&args.Major, "major", false, "Update to the latest semver version")
+	flag.BoolVar(&args.Minor, "minor", false, "Update to the latest minor version")
+	flag.BoolVar(&args.Patch, "patch", true, "Update to the latest patch version")
 
 	flag.Parse()
+
+	if args.Full {
+		args.Major = true
+		args.Minor = true
+		args.Patch = true
+	}
 
 	if args.Help {
 		flag.Usage()

@@ -17,7 +17,7 @@ func NewUpdateChecker(path string) *UpdateChecker {
 	return &UpdateChecker{path: path}
 }
 
-func (u *UpdateChecker) Check() ([]UpdateInfo, error) {
+func (u *UpdateChecker) Check(major, minor, patch bool) ([]UpdateInfo, error) {
 	updateInfos, err := u.createUpdateInfos()
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func (u *UpdateChecker) Check() ([]UpdateInfo, error) {
 			continue
 		}
 
-		latestVersion, err := FindLatestVersion(version, tags)
+		latestVersion, err := FindLatestVersion(version, tags, major, minor, patch)
 		if err != nil {
 			slog.Error(fmt.Sprintf("Skipping (failed finding last version) \t Image: %s \t Path: %s", updateInfo.ImageName, updateInfo.FilePath))
 			continue

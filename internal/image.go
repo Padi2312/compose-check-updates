@@ -1,4 +1,4 @@
-package internal 
+package internal
 
 import (
 	"encoding/json"
@@ -9,15 +9,13 @@ import (
 	"github.com/Masterminds/semver/v3"
 )
 
-func IsOfficalImage(image string) bool {
+func IsOfficialImage(image string) bool {
 	return strings.Count(image, "/") == 0
 }
 
 func GetImageURL(image string) string {
 	baseUrl := "https://registry.hub.docker.com/v2/repositories/"
-	// Check if the image is official or non-official
-	if IsOfficalImage(image) {
-		// Offical image do not have a namespace
+	if IsOfficialImage(image) {
 		baseUrl += "library/"
 	}
 	baseUrl += image + "/tags?page_size=100"
@@ -54,37 +52,77 @@ func FetchImageTags(image string) ([]string, error) {
 	return tags, nil
 }
 
-func GetSemver(tag string) (*semver.Version, error) {
-	return semver.NewVersion(tag)
+func semverInstance(tag string) (*semver.Version, error) {
+	// Attempt to parse the tag as a semantic version
+	v, err := semver.NewVersion(tag)
+	if err != nil {
+		return nil, err
+	}
+	return v, nil
 }
 
-func FindLatestVersion(current *semver.Version, tags []string) (string, error) {
-	var versions []*semver.Version
-	var suffix string
-
-	// Determine the suffix of the current version
-	if idx := strings.Index(current.Original(), "-"); idx != -1 {
-		suffix = current.Original()[idx:]
+func FindLatestVersion(current *semver.Version, tags []string, major, minor, patch bool) (string, error) {
+	type VersionTag struct {
+		Version *semver.Version
+		Tag     string
 	}
 
+	var versionTags []VersionTag
+
+	// Collect valid semantic versions
 	for _, tag := range tags {
 		v, err := semver.NewVersion(tag)
-		if err == nil { // Skip non-semver tags
-			// Check if the tag has the same suffix as the current version
-			if suffix == "" || strings.HasSuffix(tag, suffix) {
-				versions = append(versions, v)
+		if err != nil {
+			continue // Skip tags that are not valid semantic versions
+		}
+
+		// Suffix checks
+		currentSplit := strings.Split(current.Original(), "-")
+		tagSplit := strings.Split(tag, "-")
+		if len(currentSplit) != len(tagSplit) {
+			continue
+		}
+
+		if len(currentSplit) > 1 && len(tagSplit) > 1 {
+			currentSuffix := strings.Split(current.Original(), "-")[1]
+			tagSuffix := strings.Split(tag, "-")[1]
+			if currentSuffix != tagSuffix {
+				continue
 			}
 		}
+
+		versionTags = append(versionTags, VersionTag{Version: v, Tag: tag})
 	}
 
-	if len(versions) == 0 {
+	if len(versionTags) == 0 {
 		return "", nil
 	}
 
-	sort.Sort(semver.Collection(versions))
-	for i := len(versions) - 1; i >= 0; i-- {
-		if current.Compare(versions[i]) == -1 {
-			return versions[i].Original(), nil
+	// Sort versions in ascending order
+	sort.Slice(versionTags, func(i, j int) bool {
+		return versionTags[i].Version.LessThan(versionTags[j].Version)
+	})
+
+	// Find the latest version according to the flags
+	for i := len(versionTags) - 1; i >= 0; i-- {
+		v := versionTags[i].Version
+		tag := versionTags[i].Tag
+
+		if v.Compare(current) <= 0 {
+			continue // Skip versions not newer than current
+		}
+
+		accept := false
+		if major && v.Major() != current.Major() {
+			accept = true
+		} else if minor && v.Major() == current.Major() && v.Minor() != current.Minor() {
+			accept = true
+		} else if patch && v.Major() == current.Major() && v.Minor() == current.Minor() && v.Patch() != current.Patch() {
+			accept = true
+		}
+
+		if accept {
+			return tag, nil
 		}
 	}
 

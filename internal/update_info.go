@@ -15,7 +15,7 @@ type UpdateInfo struct {
 	LatestTag     string
 }
 
-func (u *UpdateInfo) HasNewVersion() bool {
+func (u *UpdateInfo) HasNewVersion(major,minor,patch bool) bool {
 	if u.CurrentTag == "" || u.LatestTag == "" {
 		return false
 	}

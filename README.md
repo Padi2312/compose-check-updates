@@ -48,11 +48,16 @@ See the [Flags](#flags) section for more information.
 > [!IMPORTANT]
 > When using `-i` for interactive mode other arguments (except `-d` for directory) will be ignored.
 
+
 - `-h` - Show help message
 - `-u` - Update the Docker Compose files with the new image tags
 - `-r` - Restart the services after updating the Docker Compose files
 - `-i` - Interactively choose which images to update
-- `-d` - Specify the directory to scan for Docker Compose files
+- `-d` - Specify the directory to scan for Docker Compose files (default: current directory)
+- `-f` - Full update mode, checks updates to latest semver version (short for `-major -minor -patch`)
+- `-major` - Only suggest major version updates (default: false)
+- `-minor` - Only suggest minor version updates (default: false)
+- `-patch` - Only suggest patch version updates (default: true)
 
 
 ## How does it work?

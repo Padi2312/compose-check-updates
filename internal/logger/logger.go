@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"time"
 )
 
 // CustomHandler is a slog.Handler that adds colorization based on log levels.
@@ -30,7 +29,6 @@ func (h *CustomHandler) Enabled(_ context.Context, level slog.Level) bool {
 // Handle formats and writes the Record to the output.
 func (h *CustomHandler) Handle(_ context.Context, r slog.Record) error {
 	levelStr, color := getLevelStringAndColor(r.Level)
-	timestamp := time.Now().Format("2006-01-02 15:04:05")
 	message := r.Message
 	reset := "\033[0m"
 
@@ -46,7 +44,7 @@ func (h *CustomHandler) Handle(_ context.Context, r slog.Record) error {
 		message = fmt.Sprintf("%s %s", message, attrsToString(attrs))
 	}
 
-	fmt.Fprintf(h.output, "%s[%s] %s %s%s\n", color, levelStr, timestamp, message, reset)
+	fmt.Fprintf(h.output, "%s[%s] %s%s\n", color, levelStr,  message, reset)
 	return nil
 }
 

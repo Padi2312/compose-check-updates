@@ -9,7 +9,7 @@ import (
 
 func Default(updateInfos []internal.UpdateInfo, ccuFlags internal.CCUFlags) {
 	for _, i := range updateInfos {
-		if i.HasNewVersion() {
+		if i.HasNewVersion(ccuFlags.Major, ccuFlags.Minor, ccuFlags.Patch) {
 			if !ccuFlags.Update && !ccuFlags.Restart {
 				// If no flags are provided, just print the new version
 				slog.Info(fmt.Sprintf("New version for %s: %s -> %s", i.ImageName, i.CurrentTag, i.LatestTag))

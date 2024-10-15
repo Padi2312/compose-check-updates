@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 
@@ -16,8 +15,6 @@ func main() {
 	slog.SetDefault(logger)
 
 	ccuFlags := internal.Parse()
-	fmt.Println("ccuFlags: ", ccuFlags)
-
 	root := ccuFlags.Directory
 	composeFilePaths, err := internal.GetComposeFilePaths(root)
 	if err != nil {
@@ -29,7 +26,7 @@ func main() {
 	updateInfos := []internal.UpdateInfo{}
 	for _, path := range composeFilePaths {
 		updateChecker := internal.NewUpdateChecker(path)
-		info, err := updateChecker.Check()
+		info, err := updateChecker.Check(ccuFlags.Major, ccuFlags.Minor, ccuFlags.Patch)
 		if err != nil {
 			slog.Error("Error checking for updates", "error", err)
 			continue

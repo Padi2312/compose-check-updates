@@ -22,7 +22,7 @@ func Interactive(updateInfos []internal.UpdateInfo) {
 	for path, infos := range groupedUpdateInfos {
 		slog.Info(fmt.Sprintf("File: %s", path))
 		for _, i := range infos {
-			if i.HasNewVersion() {
+			if i.HasNewVersion(true, true, true) {
 				// Ask user if they want to update the file with y/n
 				slog.Info(fmt.Sprintf("New version for %s: current=%s, latest=%s", i.ImageName, i.CurrentTag, i.LatestTag))
 				fmt.Printf("Do you want to update %s: %s -> %s (y/n): ", i.ImageName, i.CurrentTag, i.LatestTag)
