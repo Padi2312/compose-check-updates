@@ -17,18 +17,41 @@ Easily update Docker Compose image tags to their latest versions.
 
 - [Table of Contents](#table-of-contents)
 - [Installation](#installation)
-  - [Windows](#windows)
-  - [Linux](#linux)
+  - [Quick](#quick)
+  - [System-wide](#system-wide)
+    - [Windows](#windows)
+    - [Linux](#linux)
 - [Usage](#usage)
 - [Flags](#flags)
 - [How does it work?](#how-does-it-work)
 - [Troubleshooting](#troubleshooting)
+- [Image tags with only x.y versions](#image-tags-with-only-xy-versions)
   - [No new versions found but there are newer versions available](#no-new-versions-found-but-there-are-newer-versions-available)
-  - [Huge major version difference](#huge-major-version-difference)
 
 ## Installation
 
-### Windows
+### Quick 
+
+1. Download the latest Windows release from the [Releases](https://github.com/Padi2312/compose-check-updates/releases) page.
+2. Run the following command to check current directory for docker compose image updates:
+```bash
+ccu-<YOUR_ARCHITECTURE>
+```
+
+Example for Windows:
+```ps1
+ccu-windows-amd64.exe
+```
+
+Example for Linux:
+```bash
+chmod +x ccu-linux-amd64
+./ccu-linux-amd64
+```
+
+### System-wide
+
+#### Windows
 
 1. Download the latest Windows release from the [Releases](https://github.com/Padi2312/compose-check-updates/releases) page.
 2. Rename the downloaded file to `ccu.exe` for easier usage.
@@ -36,11 +59,11 @@ Easily update Docker Compose image tags to their latest versions.
 3. Run `ccu.exe -v` from the command prompt to check if the installation was successful.
 
 
-
-### Linux
+#### Linux
 
 1. Download the latest Linux release from the [Releases](https://github.com/Padi2312/compose-check-updates/releases) page.
-2. (Optional) Rename the downloaded file to `ccu` for easier usage.
+2. Rename the downloaded file to `ccu` for easier usage.
+  1. (Optional) Move the file to `/usr/local/bin` to make it available system-wide or just add it to your PATH.
 3. Make the file executable by running `chmod +x ccu`.
 4. Include the path to `ccu` in your PATH environment variable. 
 5. Run `ccu -v` from the terminal to check if the installation was successful.
@@ -57,6 +80,9 @@ ccu
 ```
 
 Check for updates and update the Docker Compose files:
+
+>[!NOTE]
+>When choosing this option, `ccu` will create backups of the original Docker Compose files with the `.ccu` extension.
 
 ```bash
 ccu -u
@@ -100,14 +126,40 @@ If newer versions are found, `compose-check-updates` will suggest the updated im
 
 ## Troubleshooting
 
+## Image tags with only x.y versions
+
+Some images only have `x.y` versions and no `x.y.z` versions. 
+This can lead to the following scenario:
+
+Alpine has the following tags:
+- `3.14`
+- `3.14.1`
+- `3.14.0`
+
+If you are using `3.14` in your Docker Compose file, `ccu` will suggest an update to `3.14.1`.
+
+But for Postgres with the following tags:
+- `13`
+- `13.3`
+- `13.4`
+
+If you are using `13.2` in your Docker Compose file, `ccu` will not suggest an update to `13.4` because it's no valid semver version.
+
+_(This might be changed in the future with an additional flag)_
+
 ### No new versions found but there are newer versions available
 
 On default `ccu` checks for patch versions only. 
 
+---
+
 Example:
 - Current image tag: `1.0.0`
-- No newer patch versions available
 - Latest image tag: `1.1.0`
+
+Result: No newer patch versions available
+
+---
 
 `ccu` on default will not suggest an update in this case. 
 
@@ -117,6 +169,4 @@ To check for all newer versions, use the `-f` flag:
 ccu -f
 ```
 
-### Huge major version difference
-
-In case your using the `alpine` image which has version `3.20` and you run `ccu -f` and the latest version is `20240807`. This is because the `alpine` image uses the date as version. If there is just one version section provided this will be considered as a major version update.
+This will suggest the latest version `1.1.0` as an update.
