@@ -25,7 +25,7 @@ Easily update Docker Compose image tags to their latest versions.
 - [Flags](#flags)
 - [How does it work?](#how-does-it-work)
 - [Troubleshooting](#troubleshooting)
-- [Image tags with only x.y versions](#image-tags-with-only-xy-versions)
+  - [Image tags with only x.y versions](#image-tags-with-only-xy-versions)
   - [No new versions found but there are newer versions available](#no-new-versions-found-but-there-are-newer-versions-available)
 
 ## Installation
