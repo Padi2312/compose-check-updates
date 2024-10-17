@@ -22,14 +22,19 @@ Easily update Docker Compose image tags to their latest versions.
 - [Usage](#usage)
 - [Flags](#flags)
 - [How does it work?](#how-does-it-work)
+- [Troubleshooting](#troubleshooting)
+  - [No new versions found but there are newer versions available](#no-new-versions-found-but-there-are-newer-versions-available)
+  - [Huge major version difference](#huge-major-version-difference)
 
 ## Installation
 
 ### Windows
 
 1. Download the latest Windows release from the [Releases](https://github.com/Padi2312/compose-check-updates/releases) page.
-2. (Optional) Rename the downloaded file to `ccu.exe` for easier usage.
-3. Include the path to `ccu.exe` in your PATH environment variable.
+2. Rename the downloaded file to `ccu.exe` for easier usage.
+   1. (Optional) Add the file's directory to your PATH environment variable. So you can run `ccu` from any directory.
+3. Run `ccu.exe -v` from the command prompt to check if the installation was successful.
+
 
 
 ### Linux
@@ -38,8 +43,7 @@ Easily update Docker Compose image tags to their latest versions.
 2. (Optional) Rename the downloaded file to `ccu` for easier usage.
 3. Make the file executable by running `chmod +x ccu`.
 4. Include the path to `ccu` in your PATH environment variable. 
-5. Run `ccu` from the terminal to check if the installation was successful.
-
+5. Run `ccu -v` from the terminal to check if the installation was successful.
 
 
 ## Usage
@@ -93,3 +97,26 @@ If newer versions are found, `compose-check-updates` will suggest the updated im
 
 > [!NOTE]
 > All subdirectories are scanned recursively for Docker Compose files.
+
+## Troubleshooting
+
+### No new versions found but there are newer versions available
+
+On default `ccu` checks for patch versions only. 
+
+Example:
+- Current image tag: `1.0.0`
+- No newer patch versions available
+- Latest image tag: `1.1.0`
+
+`ccu` on default will not suggest an update in this case. 
+
+To check for all newer versions, use the `-f` flag:
+  
+```bash 
+ccu -f
+```
+
+### Huge major version difference
+
+In case your using the `alpine` image which has version `3.20` and you run `ccu -f` and the latest version is `20240807`. This is because the `alpine` image uses the date as version. If there is just one version section provided this will be considered as a major version update.

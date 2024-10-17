@@ -77,7 +77,7 @@ func TestParse(t *testing.T) {
 				exitCode = 2
 			}
 
-			result := Parse()
+			result := Parse("test")
 			if exitCode != 0 {
 				return
 			}

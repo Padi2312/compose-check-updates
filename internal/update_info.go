@@ -4,6 +4,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/Masterminds/semver/v3"
 )
 
 type UpdateInfo struct {
@@ -15,17 +17,17 @@ type UpdateInfo struct {
 	LatestTag     string
 }
 
-func (u *UpdateInfo) HasNewVersion(major,minor,patch bool) bool {
+func (u *UpdateInfo) HasNewVersion(major, minor, patch bool) bool {
 	if u.CurrentTag == "" || u.LatestTag == "" {
 		return false
 	}
 
-	current, err := GetSemver(u.CurrentTag)
+	current, err := semver.NewVersion(u.CurrentTag)
 	if err != nil {
 		return false
 	}
 
-	latest, err := GetSemver(u.LatestTag)
+	latest, err := semver.NewVersion(u.LatestTag)
 	if err != nil {
 		return false
 	}

@@ -16,7 +16,7 @@ func main() {
 	logger := slog.New(logger.NewCustomHandler(slog.LevelInfo, os.Stdout))
 	slog.SetDefault(logger)
 
-	ccuFlags := internal.Parse()
+	ccuFlags := internal.Parse(version)
 	root := ccuFlags.Directory
 	composeFilePaths, err := internal.GetComposeFilePaths(root)
 	if err != nil {
@@ -27,7 +27,7 @@ func main() {
 
 	updateInfos := []internal.UpdateInfo{}
 	for _, path := range composeFilePaths {
-		updateChecker := internal.NewUpdateChecker(path)
+		updateChecker := internal.NewUpdateChecker(path, internal.NewRegistry(""))
 		info, err := updateChecker.Check(ccuFlags.Major, ccuFlags.Minor, ccuFlags.Patch)
 		if err != nil {
 			slog.Error("Error checking for updates", "error", err)

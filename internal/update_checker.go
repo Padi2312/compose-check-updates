@@ -7,14 +7,20 @@ import (
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/Masterminds/semver/v3"
 )
 
 type UpdateChecker struct {
-	path string
+	path     string
+	registry *Registry
 }
 
-func NewUpdateChecker(path string) *UpdateChecker {
-	return &UpdateChecker{path: path}
+func NewUpdateChecker(path string, registry *Registry) *UpdateChecker {
+	if registry == nil {
+		registry = NewRegistry("")
+	}
+	return &UpdateChecker{path: path, registry: registry}
 }
 
 func (u *UpdateChecker) Check(major, minor, patch bool) ([]UpdateInfo, error) {
@@ -24,24 +30,19 @@ func (u *UpdateChecker) Check(major, minor, patch bool) ([]UpdateInfo, error) {
 	}
 
 	for i, updateInfo := range updateInfos {
-		version, err := GetSemver(updateInfo.CurrentTag)
+		version, err := semver.NewVersion(updateInfo.CurrentTag)
 		if err != nil {
 			slog.Warn(fmt.Sprintf("Skipping (invalid semver) \t Image: %s \t Path: %s", updateInfo.ImageName, updateInfo.FilePath))
 			continue
 		}
 
-		tags, err := FetchImageTags(updateInfo.ImageName)
+		tags, err := u.registry.FetchImageTags(updateInfo.ImageName)
 		if err != nil {
 			slog.Error(fmt.Sprintf("Skipping (failed fetching tags) \t Image: %s \t Path: %s", updateInfo.ImageName, updateInfo.FilePath))
 			continue
 		}
 
-		latestVersion, err := FindLatestVersion(version, tags, major, minor, patch)
-		if err != nil {
-			slog.Error(fmt.Sprintf("Skipping (failed finding last version) \t Image: %s \t Path: %s", updateInfo.ImageName, updateInfo.FilePath))
-			continue
-		}
-
+		latestVersion := FindLatestVersion(version, tags, major, minor, patch)
 		if latestVersion != "" {
 			updateInfos[i].LatestTag = latestVersion
 		}

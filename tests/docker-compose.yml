@@ -1,14 +1,19 @@
 version: "3.8"
 
 services:
-  nginx:
-    image: nginx:1.26.2
+  # # Shouldn't be recognized by ccu because of invalid semver
+  # nginx-latest:
+  #   image: nginx:latest
 
-  nginx-latest:
-    image: nginx:latest
+  # # Shouldn't be recognized by ccu because of invalid semver
+  # pytorch-latest:
+  #   image: pytorch/pytorch:latest
 
-  redis:
-    image: redis:7.0.5
+  # nginx:
+  #   image: nginx:1.26.2
+
+  # redis:
+  #   image: redis:7.0.5
 
   postgres:
     image: postgres:14.5
@@ -16,8 +21,5 @@ services:
   alpine:
     image: alpine:3.16
 
-  pytorch-latest:
-    image: pytorch/pytorch:latest
-
-  pytorch:
-    image: pytorch/pytorch:1.10.0
+  # pytorch:
+  #   image: pytorch/pytorch:1.8.1-cuda11.1-cudnn8-runtime
