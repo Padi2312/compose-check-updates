@@ -1,18 +1,34 @@
-name: Build and release ccu 
+name: Pre-release ccu
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.23.2'  # Use the Go version that your project requires
+
+      - name: Run Tests
+        run: |
+          go test ./...
+
+
   build-and-upload:
     name: Build and upload
     runs-on: ubuntu-latest
+    needs: test  # Add this line to ensure the test job runs first
 
     strategy:
       matrix:
         os: [linux, windows]
-        goarch: [amd64, arm, arm64, 386]  
+        goarch: [amd64]  # Add more architectures if needed
 
     steps:
       - name: Checkout
@@ -44,3 +60,5 @@ jobs:
           files: |
             ${{ env.ASSET }}
           tag_name: ${{ env.VERSION }}
+          prerelease: true
+
