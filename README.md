@@ -126,7 +126,7 @@ If newer versions are found, `compose-check-updates` will suggest the updated im
 
 ## Troubleshooting
 
-## Image tags with only x.y versions
+### Image tags with only x.y versions
 
 Some images only have `x.y` versions and no `x.y.z` versions. 
 This can lead to the following scenario:
