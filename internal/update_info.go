@@ -85,12 +85,21 @@ func (u *UpdateInfo) Update() error {
 }
 
 func (u *UpdateInfo) Restart() error {
-	// Execute docker-compose up -d here with os
-	cmd := exec.Command("docker-compose", "-f", u.FilePath, "up", "-d")
+	dockerComposeCommand := "docker-compose"
+	_, err := exec.LookPath(dockerComposeCommand)
+	if err != nil {
+		dockerComposeCommand = "docker compose"
+		_, err = exec.LookPath(dockerComposeCommand)
+		if err != nil {
+			return err
+		}
+	}
+
+	cmd := exec.Command(dockerComposeCommand, "-f", u.FilePath, "up", "-d")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		return err
 	}
