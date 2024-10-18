@@ -3,6 +3,7 @@ package main
 import (
 	"log/slog"
 	"os"
+	"sync"
 
 	"github.com/padi2312/compose-check-updates/internal"
 	"github.com/padi2312/compose-check-updates/internal/logger"
@@ -25,16 +26,27 @@ func main() {
 		return
 	}
 
-	updateInfos := []internal.UpdateInfo{}
+	var updateInfos []internal.UpdateInfo
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
 	for _, path := range composeFilePaths {
-		updateChecker := internal.NewUpdateChecker(path, internal.NewRegistry(""))
-		info, err := updateChecker.Check(ccuFlags.Major, ccuFlags.Minor, ccuFlags.Patch)
-		if err != nil {
-			slog.Error("Error checking for updates", "error", err)
-			continue
-		}
-		updateInfos = append(updateInfos, info...)
+		wg.Add(1)
+		go func(path string) {
+			defer wg.Done()
+			updateChecker := internal.NewUpdateChecker(path, internal.NewRegistry(""))
+			info, err := updateChecker.Check(ccuFlags.Major, ccuFlags.Minor, ccuFlags.Patch)
+			if err != nil {
+				slog.Error("Error checking for updates", "error", err)
+				return
+			}
+			mu.Lock()
+			updateInfos = append(updateInfos, info...)
+			mu.Unlock()
+		}(path)
 	}
+
+	wg.Wait()
 
 	if ccuFlags.Interactive {
 		modes.Interactive(updateInfos)
