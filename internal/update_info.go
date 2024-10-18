@@ -95,7 +95,12 @@ func (u *UpdateInfo) Restart() error {
 		}
 	}
 
-	cmd := exec.Command(dockerComposeCommand, "-f", u.FilePath, "up", "-d")
+	var cmd *exec.Cmd
+	if dockerComposeCommand == "docker-compose" {
+		cmd = exec.Command("docker-compose", "-f", u.FilePath, "up", "-d")
+	} else {
+		cmd = exec.Command("docker", "compose", "-f", u.FilePath, "up", "-d")
+	}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
